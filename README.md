@@ -1023,7 +1023,8 @@ adb shell setprop ctl.restart zygote
 
 
 
-## acpi
+<details>
+  <summary><h2>acpi</h2></summary>
 
 Show help for `acpi`:
 ```bash
@@ -1052,7 +1053,10 @@ adb shell acpi -V
 
 ```
 
-## adb
+</details>
+
+<details>
+  <summary><h2>adb</h2></summary>
 
 Environment variables:
 
@@ -1156,7 +1160,10 @@ Detach from a USB device to allow use by others:
 adb detach
 ```
 
-## Network Commands
+</details>
+
+<details>
+  <summary><h2>Network Commands</h2></summary>
 
 Connect to a device via TCP/IP:
 
@@ -1286,6 +1293,8 @@ List all discovered services:
 adb mdns services
 ```
 
+
+</details>
 
 <details>
   <summary><h2>Security Commands</h2></summary>
@@ -2646,7 +2655,8 @@ Print device carriers:
 adb shell su -c content query --uri content://telephony/carriers
 ```
 
-## ffplay
+<details>
+  <summary><h2>ffplay</h2></summary>
 
 ### Stream via FFplay 
 
@@ -2672,7 +2682,10 @@ FFplay Customized - Stream in 1080p quality
 adb exec-out screenrecord |    --bit-rate=16m |    --Example Output-format=h264 |    --size 1920x1080 -
 ```
 
-## getprop
+</details>
+
+<details>
+  <summary><h2>getprop</h2></summary>
 
 Use the `getprop` command to get system properties.
 
@@ -2706,7 +2719,10 @@ adb shell getprop sys.boot_completed
 ```
 
 
-## input tap 
+</details>
+
+<details>
+  <summary><h2>input tap</h2></summary>
 
 ```bash
 Origin (0, 0)
@@ -3038,130 +3054,6 @@ In this ASCII art:
     adb shell input swipe 0 0 500 2300 & adb shell input swipe 500 0 0 2300
     ```
     
-
-Absolutely, here are more examples for screen interactions on an Android device:
-
-- To simulate a long press in the middle and then a swipe to the right (useful for triggering slide menus):
-    ```
-    adb shell input swipe 250 1150 400 1150 2000
-    ```
-
-- To simulate a long press in the middle and then a swipe to the left (useful for triggering slide menus):
-    ```
-    adb shell input swipe 250 1150 100 1150 2000
-    ```
-
-- To simulate a swipe from the center of the screen to the "Back" button (might be useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 1150 50 2250
-    ```
-
-- To simulate a swipe from the center of the screen to the "Home" button (might be useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 1150 250 2250
-    ```
-
-- To simulate a swipe from the center of the screen to the "Recent Apps" button (might be useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 1150 450 2250
-    ```
-
-- To simulate a long press on the top-middle of the screen (might be useful for some apps):
-    ```
-    adb shell input swipe 250 300 250 300 2000
-    ```
-
-- To simulate a long press on the bottom-middle of the screen (might be useful for some apps):
-    ```
-    adb shell input swipe 250 2000 250 2000 2000
-    ```
-
-- To simulate a pinch gesture in the left-half of the screen:
-    ```
-    adb shell input swipe 0 1150 125 1150 & adb shell input swipe 250 1150 125 1150
-    ```
-
-- To simulate a spread gesture in the left-half of the screen:
-    ```
-    adb shell input swipe 125 1150 0 1150 & adb shell input swipe 125 1150 250 1150
-    ```
-
-- To simulate a pinch gesture in the right-half of the screen:
-    ```
-    adb shell input swipe 500 1150 375 1150 & adb shell input swipe 250 1150 375 1150
-    ```
-
-- To simulate a spread gesture in the right-half of the screen:
-    ```
-    adb shell input swipe 375 1150 500 1150 & adb shell input swipe 375 1150 250 1150
-    ```
-
-- To simulate a swipe in the shape of a square (might be useful for some games or apps):
-    ```
-    adb shell input swipe 125 875 375 875 & adb shell input swipe 375 875 375 1425 & adb shell input swipe 375 1425 125 1425 & adb shell input swipe 125 1425 125 875
-    ```
-
-- To simulate a swipe in the shape of a circle (might be useful for some games or apps):
-    ```
-    # This is a bit complex and might not be perfect, but it's a way to simulate a circular swipe:
-    adb shell input swipe 250 1150 375 1150 500 & adb shell input swipe 375 1150 375 1425 500 & adb shell input swipe 375 1425 125 1425 500 & adb shell input swipe 125 1425 125 875 500 & adb shell input swipe 125 875 250 875 500
-    ```
-
-- To simulate a tap on the center of the screen with a delay (useful for timed inputs):
-    ```
-    adb shell input tap 250 1150; sleep 1
-    ```
-
-- To simulate multiple taps on the center of the screen with a delay between each (useful for timed inputs):
-    ```
-    adb shell input tap 250 1150; sleep 1; adb shell input tap 250 1150; sleep 1; adb shell input tap 250 1150
-    ```
-
-- To simulate a swipe from the middle to the left of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 250 1150 0 1150
-    ```
-
-- To simulate a swipe from the middle to the right of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 250 1150 500 1150
-    ```
-
-- To simulate a swipe from the left to the middle of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 0 1150 250 1150
-    ```
-
-- To simulate a swipe from the right to the middle of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 500 1150 250 1150
-    ```
-
-- To simulate a swipe from the "Back" button to the "Home" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 50 2250 250 2250
-    ```
-
-- To simulate a swipe from the "Home" button to the "Recent Apps" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 2250 450 2250
-    ```
-
-- To simulate a swipe from the "Recent Apps" button to the "Home" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 450 2250 250 2250
-    ```
-
-- To simulate a swipe from the "Home" button to the "Back" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 2250 50 2250
-    ```
-
-- To simulate a long press on the "Recent Apps" button (useful for some services):
-    ```
-    adb shell input swipe 450 2250 450 2250 2000
-    ```
-
 Simulate input events using the `input` command.
 
 ### Erase all text
@@ -3422,7 +3314,10 @@ adb shell input keyevent 4
 adb shell am start -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact -e name 'wuseman' -e phone '+46728999329' -e email 'wuseman@nr1.nu' 
 ```
 
-## keytool
+</details>
+
+<details>
+  <summary><h2>keytool</h2></summary>
 
 Keytool is a command-line tool for managing keys and certificates.
 
@@ -3438,7 +3333,10 @@ Typically used in Google Maps
 keytool -list -v -keystore ~/.android/debug.keystore -alias your_alias           
 ```
 
-## logcat
+</details>
+
+<details>
+  <summary><h2>logcat</h2></summary>
 
 Use the `logcat` command to view logs generated by the system and applications.
 
@@ -3492,7 +3390,10 @@ Print log from `lock_settings` only
 adb logcat | grep "LockSettingsService|LockPatternUtilsKeyStorage|vold|vold|keystore2|keymaster_tee|LockSettingsService|vold_prepare_subdirs"
 ```
 
-## pm
+</details>
+
+<details>
+  <summary><h2>pm</h2></summary>
 
 The `pm` command is used to manage packages on the device.
 
@@ -3593,7 +3494,10 @@ adb shell pm revoke com.application android.permission.READ_LOGS
 adb shell pm reset-permissions -p your.app.package
 ```
 
-## reboot
+</details>
+
+<details>
+  <summary><h2>reboot</h2></summary>
 
 ### Reboot system
 
@@ -3619,7 +3523,10 @@ adb reboot bootloader
 adb reboot fastboot
 ```
 
-## Android Shell Resources
+</details>
+
+<details>
+  <summary><h2>Android Shell Resources</h2></summary>
 
 - [Dirty Pagetable: A Novel Exploitation Technique To Rule Linux Kernel](https://yanglingxi1993.github.io/dirty_pagetable/dirty_pagetable.html)
 - [Android™ Developer - Emulator Console](https://developer.android.com/studio/run/emulator-console)
@@ -3645,6 +3552,8 @@ adb reboot fastboot
 - [Good review for clipboard control](https://www.smartspate.com/how-to-copy-text-from-the-clipboard-to-android-devices/)
 - [Utilizing adb for daily tasks](https://www.droidcon.com/2021/10/21/utilizing-adb-for-daily-tasks/)
 
+
+</details>
 
 <hr>
 
