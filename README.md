@@ -8,7 +8,7 @@
 
 <hr>
 
-
+> **Enriched fork of the original cheat sheet.** 5 command fixes · 9 new sections (network, processes, memory, alarms/doze, battery, logcat, packages/privacy, system helpers, integrity) · 13 scripts in `scripts/`. Removed ~986 lines of duplicated content and AI-generated filler. **≈34% of the original changed** (+503 / −986 lines).
 
 I have created customized scripts specifically for activities, and I am confident that you will find them useful. Here is an example script that specifically targets activities.
 
