@@ -500,9 +500,9 @@ find /data/data -name '*db' -type f -print0 i|xargs -0 -n1 -P$(nproc) sh -c 'ech
   | `/data/data/<package>/shared_prefs/` | Default storage for `shared` preferences |
   | `/data/app` | Default storage for `third-party` apps |
   | `/system/app` | Default storage for `system` apks |
-  | `/mmt/asec` | Default storage for `encrypted` files |
-  | `/mmt/emmc` | Default storage for `internal` storage |
-  | `/mmt/sdcard` | Default storage for `external` mmc/sdcard |
+  | `/mnt/asec` | Default storage for `encrypted` files |
+  | `/mnt/emmc` | Default storage for `internal` storage |
+  | `/mnt/sdcard` | Default storage for `external` mmc/sdcard |
 </details>
 
 
@@ -683,7 +683,7 @@ function startintent() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X shell am start $(1)
+    |xargs -I X adb -s X shell am start "$1"
 }
 
 function apkinstall() {
@@ -691,21 +691,21 @@ function apkinstall() {
     |tail -n +2 \
     |cut -sf 1 \
     |xargs -I X \
-      adb -s X install -r $(1)
+      adb -s X install -r "$1"
 }
 
 function rmapp() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X uninstall $(1)
+    |xargs -I X adb -s X uninstall "$1"
 }
 
 function clearapp() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X shell cmd package clear $(1)
+    |xargs -I X adb -s X shell cmd package clear "$1"
 }
 ```
 </details>
@@ -767,7 +767,7 @@ This requires that the USB cable is connected until you connect. Once connected 
 port="5555"
 
 interface=$(adb shell ip addr | awk '/state UP/ {print $2}' | sed 's/.$//'; )
-ip=$(adb shell ifconfig ${interface} \
+ip=$(adb shell ip -4 addr show ${interface} \
     |egrep  -o '(\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>\.){3}\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>' 2> /dev/null \
     |head -n 1)
 
@@ -905,7 +905,7 @@ Read the screen via uiautomator and print IMEI for all active esim/sim cards on 
 
 adb shell input keyevent KEYCODE_CALL;
 sleep 1;
-input text '*#06#'; 
+adb shell input text '*#06#'; 
 uiautomator dump --compressed /dev/stdout\
     |tr ' ' '\n'\
     |awk -F'"' '{print $2}'|grep "^[0-9]\{15\}$" \
@@ -1110,7 +1110,7 @@ function startintent() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X shell am start $(1)
+    |xargs -I X adb -s X shell am start "$1"
 }
 
 function apkinstall() {
@@ -1118,21 +1118,21 @@ function apkinstall() {
     |tail -n +2 \
     |cut -sf 1 \
     |xargs -I X \
-      adb -s X install -r $(1)
+      adb -s X install -r "$1"
 }
 
 function rmapp() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X uninstall $(1)
+    |xargs -I X adb -s X uninstall "$1"
 }
 
 function clearapp() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X shell cmd package clear $(1)
+    |xargs -I X adb -s X shell cmd package clear "$1"
 }
 ```
 </details>
@@ -1160,7 +1160,7 @@ This requires that the USB cable is connected until you connect. Once connected 
 port="5555"
 
 interface=$(adb shell ip addr | awk '/state UP/ {print $2}' | sed 's/.$//'; )
-ip=$(adb shell ifconfig ${interface} \
+ip=$(adb shell ip -4 addr show ${interface} \
     |egrep  -o '(\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>\.){3}\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>' 2> /dev/null \
     |head -n 1)
 
@@ -1242,7 +1242,7 @@ Read the screen via uiautomator and print IMEI for all active esim/sim cards on 
 
 adb shell input keyevent KEYCODE_CALL;
 sleep 1;
-input text '*#06#'; 
+adb shell input text '*#06#'; 
 uiautomator dump --compressed /dev/stdout\
     |tr ' ' '\n'\
     |awk -F'"' '{print $2}'|grep "^[0-9]\{15\}$" \
@@ -1719,7 +1719,7 @@ Print dev path:
 adb get-devpath
 ```
 
-Remount partitions read-write:
+Remount partitions read-write (`adb remount` does the remount); the `-R` flag additionally reboots the device when needed:
 
 ```bash
 adb remount -R
@@ -4371,6 +4371,340 @@ adb reboot fastboot
 - [Good review for clipboard control](https://www.smartspate.com/how-to-copy-text-from-the-clipboard-to-android-devices/)
 - [Utilizing adb for daily tasks](https://www.droidcon.com/2021/10/21/utilizing-adb-for-daily-tasks/)
 
+
+<hr>
+
+## Enriched sections
+
+Conventions: `adb shell <cmd>` runs on the device; commands inside `adb shell` work verbatim in a device shell/Termux. Use `adb -s <serial>` or `export ANDROID_SERIAL=...` with several devices. Output varies by Android version/OEM; root-only items are flagged ⚠️.
+
+<details>
+  <summary><h2>🆕 Network: netstat, sockets, routing, DNS</h2></summary>
+
+| Goal | Command |
+|---|---|
+| All sockets + owning process (root for other UIDs) | `adb shell netstat -tunap` |
+| Same via iproute2 (if present) | `adb shell ss -tunap` |
+| Listening ports only | `adb shell netstat -tlnp` |
+| Raw kernel tables (no root, UID column included) | `adb shell cat /proc/net/tcp /proc/net/tcp6 /proc/net/udp /proc/net/udp6` |
+| Interfaces and addresses | `adb shell ip -br addr` |
+| Routes, all tables (VPN policy routing) | `adb shell ip route show table all` |
+| Policy rules (per-UID VPN routing shows up here) | `adb shell ip rule` |
+| Neighbour/ARP | `adb shell ip neigh` |
+| Interface counters | `adb shell cat /proc/net/dev` |
+| ✚ Connectivity service state, active network, VPN | `adb shell dumpsys connectivity` |
+| ✚ Is a VPN active / which UID owns it | `adb shell dumpsys connectivity | grep -iE "vpn|VPN:"` |
+| ✚ Per-UID / per-iface usage history | `adb shell dumpsys netstats --full` ; `--uid` ; `--summary` |
+| ✚ Data saver, background restrictions per UID | `adb shell dumpsys netpolicy` |
+| ✚ Blocking per-app background data | `adb shell cmd netpolicy add restrict-background-blacklist <uid>` |
+| ✚ Wi-Fi state, scan results, saved nets | `adb shell dumpsys wifi` |
+| ✚ Private DNS mode / host | `adb shell settings get global private_dns_mode` ; `private_dns_specifier` |
+| ✚ Set Private DNS | `adb shell settings put global private_dns_mode hostname` then `settings put global private_dns_specifier dns.example.org` |
+| ✚ Reverse-lookup UID → package | `adb shell pm list packages -U | grep "uid:10123"` |
+| ✚ DNS resolver stats | `adb shell dumpsys dnsresolver` |
+| ✚ Captive-portal check URLs | `adb shell settings get global captive_portal_http_url` |
+| ✚ Capture traffic (⚠️ root, tcpdump binary needed) | `adb shell su -c "tcpdump -i any -s0 -w /sdcard/cap.pcap"` then `adb pull /sdcard/cap.pcap` |
+
+Reading `/proc/net/tcp`: `local_address` is little-endian hex (`0100007F:1F90` = 127.0.0.1:8080); `st` `01`=ESTABLISHED, `0A`=LISTEN, `06`=TIME_WAIT; column `uid` identifies the app. Script 📜 `net_connections_csv.sh` decodes this into a CSV with package names, no root needed.
+
+🔒 Tip: to see what an app talks to without root, run the VPN-mode packet loggers (e.g. PCAPdroid, open source) and compare against 📜 `net_connections_csv.sh`.
+
+</details>
+
+<details>
+  <summary><h2>🆕 Processes: procstats, ps, top, /proc</h2></summary>
+
+- ✚ Process stats over time (PSS/RSS min-avg-max, run-time %): `adb shell dumpsys procstats --hours 3` (also `--full-details`, `--checkin`, `--csv`, `--package <pkg>`, `--current`).
+- ✚ Clear stats: `adb shell dumpsys procstats --clear` (⚠️ may need root on newer builds).
+- ✚ Process list with memory: `adb shell ps -A -o PID,PPID,USER,RSS,VSZ,S,NAME`
+- ✚ Sorted by RSS (on host): `adb shell ps -A -o RSS,PID,NAME | sort -nr | head`
+- ✚ Live CPU: `adb shell top -b -n 1 -m 15 -o PID,USER,%CPU,RES,ARGS`
+- ✚ CPU per package: `adb shell dumpsys cpuinfo`
+- ✚ Per-process details (own-UID or root): `adb shell cat /proc/<pid>/status` · `/proc/<pid>/smaps_rollup` · `/proc/<pid>/cmdline` · `ls -l /proc/<pid>/fd` · `/proc/<pid>/oom_score_adj`
+- ✚ Find PID of app: `adb shell pidof com.example.app`
+- ✚ Threads: `adb shell ps -T -p <pid>`
+- ✚ Process OOM / LRU ordering: `adb shell dumpsys activity processes` (look for `oom`, `procState`)
+- ✚ Kernel: `adb shell cat /proc/loadavg /proc/stat /proc/pressure/memory` (PSI where available)
+- ✚ Kill background: `adb shell am kill <pkg>` (cached only) · `adb shell am force-stop <pkg>` (hard)
+
+</details>
+
+<details>
+  <summary><h2>🆕 Memory: dumpsys meminfo and friends</h2></summary>
+
+- ✚ System overview: `adb shell dumpsys meminfo`
+- ✚ One app, full breakdown (Java heap, native, graphics, code…): `adb shell dumpsys meminfo <pkg|pid>`
+- ✚ Group by OOM adj: `adb shell dumpsys meminfo --oom`
+- ✚ Machine-readable: `adb shell dumpsys meminfo -c`
+- ✚ Native detail: `adb shell dumpsys meminfo --unreachable <pid>` (native leak hunt)
+- ✚ Raw kernel view: `adb shell cat /proc/meminfo` ; key fields `MemAvailable`, `SwapFree`, `Dirty`, `Slab`
+- ✚ Maps: `adb shell showmap <pid>` (⚠️ root for others) ; `adb shell procrank` (⚠️ userdebug/root)
+- ✚ zRAM/swap: `adb shell cat /proc/swaps` ; `adb shell cat /sys/block/zram0/mm_stat`
+- ✚ Low-memory killer log: `adb logcat -b events -d | grep -E "am_kill|lmkd"` ; `adb shell dumpsys activity lmk` (version dependent)
+- ✚ Graphics memory: `adb shell dumpsys gfxinfo <pkg>` ; `adb shell dumpsys SurfaceFlinger`
+- ✚ Storage: `adb shell df -h` ; `adb shell dumpsys diskstats`
+
+Memory to CSV (ready to use): 📜 `mem_by_process.sh` (per-process PSS snapshot), 📜 `mem_timeline.sh` (system memory over time), 📜 `cpu_top_csv.sh`, and on-device 📜 `shell_on_device_meminfo_csv.sh` (run it from cron/Termux `crond` or a loop).
+
+Example loop, one sample/minute for 8 h of per-process memory:
+```
+for i in $(seq 480); do ./mem_by_process.sh mem_all.csv >/dev/null; sleep 60; done
+```
+(The script writes a new header each run; strip duplicates with `awk 'NR==1 || $0!~/^timestamp/' mem_all.csv`.)
+
+</details>
+
+<details>
+  <summary><h2>🆕 Alarms, jobs, doze, standby</h2></summary>
+
+- ✚ All alarms: `adb shell dumpsys alarm` (sections: pending alarms by type, "Alarm Stats" per package with wakeups/count, "Top Alarms", batching state)
+- ✚ Only stats: `adb shell dumpsys alarm | sed -n '/Alarm Stats:/,$p'`
+- ✚ Alarms of one app: `adb shell dumpsys alarm | grep -A6 <pkg>`
+- ✚ Scheduled jobs (WorkManager/JobScheduler): `adb shell dumpsys jobscheduler` · force run: `adb shell cmd jobscheduler run -f <pkg> <job_id>`
+- ✚ Doze state: `adb shell dumpsys deviceidle` ; force: `adb shell dumpsys deviceidle force-idle` ; leave: `adb shell dumpsys deviceidle unforce`
+- ✚ Doze allowlist: `adb shell dumpsys deviceidle whitelist` ; add: `adb shell dumpsys deviceidle whitelist +<pkg>`
+- ✚ App Standby bucket: `adb shell am get-standby-bucket <pkg>` ; set: `adb shell am set-standby-bucket <pkg> rare`
+- ✚ Wakelocks: `adb shell dumpsys power | grep -i "wake lock"`
+- ✚ Exact-alarm permission (Android 12+): `adb shell cmd appops get <pkg> SCHEDULE_EXACT_ALARM` ; revoke: `adb shell cmd appops set <pkg> SCHEDULE_EXACT_ALARM deny`
+- ✚ Broadcasts in flight / receivers: `adb shell dumpsys activity broadcasts`
+- ✚ Foreground services: `adb shell dumpsys activity services <pkg>`
+
+📜 `alarm_summary.sh` stores the raw dump and a pending-alarm count per package.
+
+</details>
+
+<details>
+  <summary><h2>🆕 Battery, thermal, power</h2></summary>
+
+- ✚ Quick state: `adb shell dumpsys battery`
+- ✚ Fake unplugged (so stats accumulate while on USB): `adb shell dumpsys battery unplug` ; restore: `adb shell dumpsys battery reset`
+- ✚ Reset stats: `adb shell dumpsys batterystats --reset`
+- ✚ Report: `adb shell dumpsys batterystats` (look at "Estimated power use (mAh)", "All kernel wake locks", "All partial wake locks")
+- ✚ One package: `adb shell dumpsys batterystats --charged <pkg>`
+- ✚ For Battery Historian: `adb shell dumpsys batterystats --checkin`, plus `adb bugreport`
+- ✚ Temperatures: `adb shell dumpsys thermalservice` · `adb shell cat /sys/class/thermal/thermal_zone*/temp`
+- ✚ Charge counters: `adb shell cat /sys/class/power_supply/battery/{capacity,current_now,voltage_now,temp,charge_full,cycle_count}` (availability varies)
+- ✚ Screen/power state: `adb shell dumpsys power | grep -E "mWakefulness|Display Power"`
+
+📜 `battery_drain_report.sh [minutes]` automates reset → wait → export.
+
+</details>
+
+<details>
+  <summary><h2>🆕 Logcat: dump, filter, buffers</h2></summary>
+
+- ✚ Dump and exit: `adb logcat -d` · clear: `adb logcat -c` · buffers: `-b main,system,crash,events,radio,all`
+- ✚ Format: `-v threadtime` (default useful), `-v brief`, `-v time`, `-v epoch`
+- ✚ Filter: `adb logcat ActivityManager:I MyTag:D *:S` · regex: `adb logcat -e "wifi|dns"`
+- ✚ By app: `adb logcat --pid=$(adb shell pidof -s <pkg>)`
+- ✚ Crashes only: `adb logcat -b crash -d`
+- ✚ Last-crash/ANR data: `adb shell dumpsys dropbox --print data_app_crash`
+- ✚ Buffer sizes: `adb logcat -g` · set: `adb logcat -G 16M`
+- ✚ Save with rotation: `adb logcat -f /sdcard/log.txt -r 4096 -n 8`
+
+</details>
+
+<details>
+  <summary><h2>🆕 Packages, permissions, app ops (🔒 privacy)</h2></summary>
+
+- ✚ Third-party apps: `adb shell pm list packages -3` · with installer & UID: `pm list packages -f -i -U`
+- ✚ Disabled / system: `pm list packages -d` / `-s`
+- ✚ Who installed an app (Play, F-Droid, sideload=null/adb): `adb shell dumpsys package <pkg> | grep -i installer`
+- ✚ Permissions: `adb shell dumpsys package <pkg> | grep -A60 "runtime permissions"`
+- ✚ Grant/revoke: `adb shell pm grant <pkg> android.permission.X` · `pm revoke <pkg> android.permission.X`
+- ✚ App ops (usage-log): `adb shell cmd appops get <pkg>` ; set: `cmd appops set <pkg> COARSE_LOCATION deny`
+- ✚ Who used mic/camera/location recently: `adb shell dumpsys appops` (or `cmd appops query-op CAMERA allow`)
+- ✚ Debloat without root, reversible: `adb shell pm uninstall -k --user 0 <pkg>` · restore: `adb shell cmd package install-existing <pkg>`
+- ✚ Disable/enable: `adb shell pm disable-user --user 0 <pkg>` / `pm enable <pkg>`
+- ✚ Signing/ certificate info: `adb shell dumpsys package <pkg> | grep -iE "signatures|versionName|firstInstall"`
+- ✚ Extract APK: `adb shell pm path <pkg>` → `adb pull <path>`
+- ✚ Notifications (⚠️ content shown): `adb shell dumpsys notification --noredact`
+- ✚ Location providers/requests: `adb shell dumpsys location`
+- ✚ Ad ID / android_id: `adb shell settings get secure android_id`
+- ✚ Accessibility services (spyware vector): `adb shell settings get secure enabled_accessibility_services`
+- ✚ Device admins: `adb shell dpm list-owners` ; `adb shell dumpsys device_policy`
+- ✚ Usage stats: `adb shell dumpsys usagestats`
+- ✚ Install flags: `adb install -r -d -g app.apk` (-g grants all runtime perms; avoid for privacy) · split APKs: `adb install-multiple *.apk`
+
+📜 `privacy_audit.sh` and `package_inventory.sh` export these to CSV.
+
+</details>
+
+<details>
+  <summary><h2>🆕 System, activity & input helpers</h2></summary>
+
+- ✚ Foreground app: `adb shell dumpsys window | grep -E "mCurrentFocus|mFocusedApp"` ; `adb shell dumpsys activity activities | grep ResumedActivity`
+- ✚ Resolve what launches an app: `adb shell cmd package resolve-activity --brief <pkg>`
+- ✚ Start / broadcast / service: `am start -n pkg/.Activity` · `am broadcast -a ACTION` · `am startservice`
+- ✚ Screenshot/record: `adb exec-out screencap -p > s.png` · `adb shell screenrecord --time-limit 30 /sdcard/r.mp4`
+- ✚ Input: `input tap X Y` · `input swipe x1 y1 x2 y2 ms` · `input text 'hi'` · `input keyevent 26`
+- ✚ Display: `wm size` · `wm density` · `wm size reset`
+- ✚ Settings: `settings list global|secure|system` · `settings put global animator_duration_scale 0`
+- ✚ Properties: `getprop ro.build.version.release ro.product.model ro.build.fingerprint`
+- ✚ Kernel/SELinux: `uname -a` · `getenforce` · `cat /proc/version` · `cat /proc/cmdline`
+- ✚ Bugreport zip: `adb bugreport out.zip`
+- ✚ Wireless debugging (Android 11+): `adb pair <ip:port>` then `adb connect <ip:port>` (no USB, pairing code based; prefer over `adb tcpip` which is unauthenticated-ish on LAN)
+- ✚ Push/pull: `adb push` · `adb pull` · `adb sync` (Android specific) · backup via `adb exec-out run-as <pkg> tar c .` for debuggable apps
+
+</details>
+
+<details>
+  <summary><h2>🆕 Integrity: sha256sum, APK hashes, signing certs, verified boot 🔐</h2></summary>
+
+### 9.1 File hashing on device
+
+`sha256sum`, `md5sum`, `sha1sum`, `sha512sum` are toybox applets. Toybox has supplied most shell utilities since Android 6 (Marshmallow), and the hash tools ship in `/system/bin`, so `adb shell sha256sum` works out of the box on roughly Android 6+ and is reliably present on Android 8+.
+
+```bash
+# hash a file on the device, no pull needed
+adb shell sha256sum /sdcard/Download/app.apk
+
+# all algorithms
+adb shell md5sum FILE ; adb shell sha1sum FILE ; adb shell sha256sum FILE ; adb shell sha512sum FILE
+
+# hash every installed APK (may be slow; no root needed for most paths)
+adb shell 'for p in $(pm list packages -f | sed "s/package://;s/ .*//"); do sha256sum "$p"; done'
+
+# verify a manifest you pushed to the device
+adb push SHA256SUMS /sdcard/checksums.txt
+adb shell 'cd /sdcard && sha256sum -c checksums.txt'
+
+# compare a pulled file against the on-device hash (host side)
+adb shell sha256sum /sdcard/f.apk | awk '{print $1}' > /tmp/dev.sha
+sha256sum f.apk | awk '{print $1}' > /tmp/host.sha
+diff /tmp/dev.sha /tmp/host.sha && echo OK
+
+# integrity of a directory tree (hashes + paths)
+adb shell 'find /sdcard/DCIM -type f -exec sha256sum {} \;' > dcim.sha256
+```
+
+Compatibility notes:
+- `sha256sum -c` (verify) and `-s` (silent) are part of toybox's md5sum-family implementation.
+- On Android 10/11+, scoped storage restricts what the *shell* user can read under `/sdcard/Android/data/<pkg>/`; public folders like `/sdcard/Download` and `/sdcard/DCIM` are fine. `adb pull`/`push` still work for accessible paths.
+- App-private dirs (`/data/data/<pkg>`) need root, or `run-as <pkg>` for debuggable apps.
+- Some OEM shells alias `sha256sum` to busybox; behavior is the same, but `-c` support can vary on very old builds — test with `adb shell sha256sum --help`.
+
+### 9.2 APK integrity vs signing identity 🔐
+
+Two different things — do not conflate them:
+- **File SHA-256**: hash of the exact APK bytes. Changes with every rebuild/repack. Good for "is this the same file I downloaded?"
+- **Signing-certificate SHA-256**: hash of the X.509 signing cert. Stable across updates from the same developer key. This is what you pin to detect a repackaged/trojanized APK.
+
+```bash
+# On-device: file hash of an installed APK
+adb shell pm path com.example.app          # e.g. package:/data/app/.../base.apk
+adb shell sha256sum /data/app/.../base.apk
+
+# Host-side: signing cert fingerprint (needs Android SDK build-tools)
+apksigner verify --print-certs app.apk
+# look for: "Signer #1 certificate SHA-256 digest:"
+
+# Host-side alternative (JDK): fully reliable only for v1 (JAR) signatures
+keytool -printcert -jarfile app.apk
+
+# Which signature schemes are present/verified (v1/v2/v3/v4)
+apksigner verify -v app.apk
+```
+
+`apksigner` is the reliable way to read signer certs regardless of v1/v2/v3/v4 scheme; `keytool -printcert -jarfile` only fully reads v1 (JAR) signatures.
+
+On-device cert fingerprint without root: not available via a simple stock shell command — `dumpsys package <pkg>` shows signature info but the raw cert digest format/availability varies by Android version and OEM. The dependable path is `adb pull` the APK, then run `apksigner` on the host.
+
+### 9.3 Verified Boot / bootloader state 🔐
+
+These come from AVB (Android Verified Boot) via kernel cmdline → system props, not from files you can hash:
+
+```bash
+adb shell getprop ro.boot.verifiedbootstate   # green | yellow | orange | red
+adb shell getprop ro.boot.flash.locked        # 1=locked, 0=unlocked
+adb shell getprop ro.boot.vbmeta.device_state # locked | unlocked
+adb shell getprop ro.boot.veritymode          # enforcing | logging | disabled (device-dependent)
+adb shell getprop ro.boot.warranty_bit        # Knox/Samsung: 0=stock, 1=tripped
+adb shell getprop ro.build.tags               # release-keys | test-keys
+adb shell getprop ro.build.fingerprint        # exact OS build identity
+adb shell getprop ro.boot.vbmeta.avb_version
+```
+
+Meaning of `verifiedbootstate`: `green` = full chain of trust verified; `yellow` = custom root cert but signature valid; `orange` = bootloader unlocked, device freely modifiable; `red` = verification failed.
+
+dm-verity itself (block-level integrity of system/vendor partitions) has been part of Verified Boot since Android 4.4; on modern devices it is enforced via AVB and you generally check it through the props above rather than running a `verity` command.
+
+### 9.4 📜 Script: `apk_integrity.sh`
+
+```bash
+./apk_integrity.sh [out.csv] [--pull]
+```
+
+- Default: hashes every installed APK on-device, no root, no pull.
+- `--pull`: also copies each APK to `./apks/` and runs `apksigner verify --print-certs` if available, adding a `cert_sha256` column.
+- Works on Android 6+ for the hashing part; the cert column needs host build-tools and is the only way to get a trustworthy fingerprint.
+
+### 9.5 Quick recipes
+
+```bash
+# "Is the APK on my phone the same one from the developer's site?"
+adb shell sha256sum "$(adb shell pm path com.example.app | sed 's/package://')"
+# compare to the hash published next to the download
+
+# "Is this app still signed by the original key?"  (host)
+adb pull "$(adb shell pm path com.example.app | sed 's/package://')" /tmp/a.apk
+apksigner verify --print-certs /tmp/a.apk | grep SHA-256
+
+# "Is my bootloader/verified-boot state clean?"
+adb shell getprop | grep -E "verifiedbootstate|vbmeta.device_state|flash.locked|build.tags"
+
+# "Baseline + detect drift later" for a folder
+adb shell 'cd /sdcard/important && sha256sum $(find . -type f)' > baseline.sha256
+# later:
+adb push baseline.sha256 /sdcard/important/
+adb shell 'cd /sdcard/important && sha256sum -c baseline.sha256'
+```
+
+---
+
+</details>
+
+<details>
+  <summary><h2>📜 Ready-to-use scripts</h2></summary>
+
+Files are shipped alongside this document in `scripts/`. All run on the host with `adb` in PATH, no root, `chmod +x` first.
+
+| Script | Output |
+|---|---|
+| `mem_by_process.sh` | CSV: timestamp, pss_kb, process, pid, state |
+| `mem_timeline.sh [s] [n]` | CSV: system memory columns per sample |
+| `cpu_top_csv.sh [s] [n]` | CSV: pid, user, cpu%, rss_kb, name |
+| `net_connections_csv.sh` | CSV: proto, local, remote, state, uid, package |
+| `net_stats_csv.sh` | CSV per-UID rx/tx (legacy kernels) or raw netstats dump |
+| `alarm_summary.sh` | CSV + raw alarm dump |
+| `battery_drain_report.sh [min]` | folder with batterystats reports |
+| `privacy_audit.sh` | CSV: installer, targetSdk, dangerous perms, bg appop |
+| `package_inventory.sh` | CSV: package, uid, installer, apk, type, enabled |
+| `full_diag_dump.sh` | tar.gz with ~25 dumpsys/proc/ip outputs and a full logcat |
+| `live_activity_cmd.sh` | prints `am start` commands as you tap through the UI |
+| `shell_on_device_meminfo_csv.sh` | on-device CSV append, for loops/cron |
+| `apk_integrity.sh [out.csv] [--pull]` | CSV: package, apk path, on-device sha256, optional cert sha256 |
+
+Caveats (untested against your device; verify on yours): `top` flags differ across toybox versions; `xt_qtaguid` is absent on Android 10+; `/proc/net/tcp` is filtered per-UID on Android 10+ for non-system shells, so `net_connections_csv.sh` may show only the shell's sockets unless root/`su` is used (replace `adb shell cat` with `adb shell su -c cat`).
+
+---
+
+</details>
+
+<details>
+  <summary><h2>Legend</h2></summary>
+
+| Sign | Meaning |
+|---|---|
+| 🆕 | New section added to the original |
+| ✚ | New or extended command inside a section |
+| 📜 | Ready-to-use script (in `scripts/`) |
+| 🔒 | Privacy-relevant note or command |
+| 🔐 | Integrity / anti-tamper related |
+| 🔧 | Correction to the original document |
+| ⚠️ | Needs root, userdebug build, or exposes sensitive data |
+
+</details>
 
 ## Greetings
 
