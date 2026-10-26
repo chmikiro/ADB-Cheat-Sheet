@@ -1349,7 +1349,7 @@ Print dev path:
 adb get-devpath
 ```
 
-Remount partitions read-write (`adb remount` does the remount); the `-R` flag additionally reboots the device when needed:
+Remount partitions read-write (`adb remount` does the remount); the `-R` flag additionally reboots the device when needed. Requires a userdebug/unlocked build — not a stock production device:
 
 ```bash
 adb remount -R
@@ -3629,11 +3629,7 @@ Reading `/proc/net/tcp`: `local_address` is little-endian hex (`0100007F:1F90` =
 
 Memory to CSV (ready to use): 📜 `mem_by_process.sh` (per-process PSS snapshot), 📜 `mem_timeline.sh` (system memory over time), 📜 `cpu_top_csv.sh`, and on-device 📜 `shell_on_device_meminfo_csv.sh` (run it from cron/Termux `crond` or a loop).
 
-Example loop, one sample/minute for 8 h of per-process memory:
-```
-for i in $(seq 480); do ./mem_by_process.sh mem_all.csv >/dev/null; sleep 60; done
-```
-(The script writes a new header each run; strip duplicates with `awk 'NR==1 || $0!~/^timestamp/' mem_all.csv`.)
+`mem_by_process.sh` writes a single snapshot per run (a fresh header each time), so a fixed filename in a loop overwrites instead of accumulating. For a time series use `mem_timeline.sh [s] [n]` (system memory), or give `mem_by_process.sh` a unique filename per sample.
 
 </details>
 
@@ -3703,7 +3699,7 @@ for i in $(seq 480); do ./mem_by_process.sh mem_all.csv >/dev/null; sleep 60; do
 - ✚ Extract APK: `adb shell pm path <pkg>` → `adb pull <path>`
 - ✚ Notifications (⚠️ content shown): `adb shell dumpsys notification --noredact`
 - ✚ Location providers/requests: `adb shell dumpsys location`
-- ✚ Ad ID / android_id: `adb shell settings get secure android_id`
+- ✚ Android ID (SSAID): `adb shell settings get secure android_id`
 - ✚ Accessibility services (spyware vector): `adb shell settings get secure enabled_accessibility_services`
 - ✚ Device admins: `adb shell dpm list-owners` ; `adb shell dumpsys device_policy`
 - ✚ Usage stats: `adb shell dumpsys usagestats`
@@ -3868,7 +3864,7 @@ Files are shipped alongside this document in `scripts/`. All run on the host wit
 | `shell_on_device_meminfo_csv.sh` | on-device CSV append, for loops/cron |
 | `apk_integrity.sh [out.csv] [--pull]` | CSV: package, apk path, on-device sha256, optional cert sha256 |
 
-Caveats (untested against your device; verify on yours): `top` flags differ across toybox versions; `xt_qtaguid` is absent on Android 10+; `/proc/net/tcp` is filtered per-UID on Android 10+ for non-system shells, so `net_connections_csv.sh` may show only the shell's sockets unless root/`su` is used (replace `adb shell cat` with `adb shell su -c cat`).
+Caveats (untested against your device; verify on yours): `top` flags differ across toybox versions; `xt_qtaguid` is absent on most Android 10+ builds (vendor/kernel-dependent); `/proc/net/tcp` is filtered per-UID on Android 10+ for non-system shells, so `net_connections_csv.sh` may show only the shell's sockets unless root/`su` is used (replace `adb shell cat` with `adb shell su -c cat`).
 
 ---
 
