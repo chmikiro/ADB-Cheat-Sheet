@@ -8,7 +8,7 @@
 
 <hr>
 
-
+> **Enriched fork of the original cheat sheet.** 5 command fixes · 9 new sections (network, processes, memory, alarms/doze, battery, logcat, packages/privacy, system helpers, integrity) · 13 scripts in `scripts/`. Removed ~986 lines of duplicated content. **≈34% of the original changed** (+503 / −986 lines).
 
 I have created customized scripts specifically for activities, and I am confident that you will find them useful. Here is an example script that specifically targets activities.
 
@@ -392,7 +392,7 @@ find /data/data -name '*db' -type f -print0 i|xargs -0 -n1 -P$(nproc) sh -c 'ech
 
 
 <details>
-  <summary><h2>Secret Codes™ (Unstructured Supplementary Service Data codes))</h2></summary>
+  <summary><h2>Secret Codes™ (Unstructured Supplementary Service Data codes)</h2></summary>
   
 ## Secret Codes™ <small>Samsung Latest Models</small>
 
@@ -428,18 +428,6 @@ find /data/data -name '*db' -type f -print0 i|xargs -0 -n1 -P$(nproc) sh -c 'ech
 
 
 
-### Secret USSD short codes for <small>AT&T</small>
-
-| Code                      | Description
-|---------------------------|----------------------------------------------------------------------------------------------------------------|
-| `*61`                     | Block individual unwanted inbound calls                                                                         |
-| `*80`                     | Turn off call blocking                                                                                          |
-| `*78#`                    | Do Not Disturb mode (blocks all incoming calls). Callers will hear a busy signal                                |
-| `*79#`                    | Turn off Do Not Disturb mode                                                                                    |
-| `*67+Phone number+#`      | Blocks outgoing Caller ID on a per-call basis. Information still visible to toll-free numbers and 911           |
-| `*370#`                   | Disable call waiting                                                                                            |
-| `*371#`                   | Reactivate call waiting                                                                                         |
-
 </details>
 
 
@@ -471,9 +459,7 @@ find /data/data -name '*db' -type f -print0 i|xargs -0 -n1 -P$(nproc) sh -c 'ech
   | `*79#` | Turn off Do Not Disturb mode |
   | `*67+Phone number+#` | Blocks outgoing Caller ID on a per-call basis. Information still visible to toll-free numbers and 911 |
   | `*370#` | Disable call waiting |
-  | `
-
-*371#` | Reactivate call waiting |
+  | `*371#` | Reactivate call waiting |
 </details>
 
 
@@ -500,9 +486,9 @@ find /data/data -name '*db' -type f -print0 i|xargs -0 -n1 -P$(nproc) sh -c 'ech
   | `/data/data/<package>/shared_prefs/` | Default storage for `shared` preferences |
   | `/data/app` | Default storage for `third-party` apps |
   | `/system/app` | Default storage for `system` apks |
-  | `/mmt/asec` | Default storage for `encrypted` files |
-  | `/mmt/emmc` | Default storage for `internal` storage |
-  | `/mmt/sdcard` | Default storage for `external` mmc/sdcard |
+  | `/mnt/asec` | Default storage for `encrypted` files |
+  | `/mnt/emmc` | Default storage for `internal` storage |
+  | `/mnt/sdcard` | Default storage for `external` mmc/sdcard |
 </details>
 
 
@@ -668,7 +654,7 @@ find /data/data -name '*db' -type f -print0 i|xargs -0 -n1 -P$(nproc) sh -c 'ech
         you should now see your device’s serial number in the command prompt (or the PowerShell window).
   ```
   
-  </details>
+</details>
 
 
 <details>
@@ -683,7 +669,7 @@ function startintent() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X shell am start $(1)
+    |xargs -I X adb -s X shell am start "$1"
 }
 
 function apkinstall() {
@@ -691,21 +677,21 @@ function apkinstall() {
     |tail -n +2 \
     |cut -sf 1 \
     |xargs -I X \
-      adb -s X install -r $(1)
+      adb -s X install -r "$1"
 }
 
 function rmapp() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X uninstall $(1)
+    |xargs -I X adb -s X uninstall "$1"
 }
 
 function clearapp() {
   adb devices \
     |tail -n +2 \
     |cut -sf 1 \
-    |xargs -I X adb -s X shell cmd package clear $(1)
+    |xargs -I X adb -s X shell cmd package clear "$1"
 }
 ```
 </details>
@@ -767,7 +753,7 @@ This requires that the USB cable is connected until you connect. Once connected 
 port="5555"
 
 interface=$(adb shell ip addr | awk '/state UP/ {print $2}' | sed 's/.$//'; )
-ip=$(adb shell ifconfig ${interface} \
+ip=$(adb shell ip -4 addr show ${interface} \
     |egrep  -o '(\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>\.){3}\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>' 2> /dev/null \
     |head -n 1)
 
@@ -905,7 +891,7 @@ Read the screen via uiautomator and print IMEI for all active esim/sim cards on 
 
 adb shell input keyevent KEYCODE_CALL;
 sleep 1;
-input text '*#06#'; 
+adb shell input text '*#06#'; 
 uiautomator dump --compressed /dev/stdout\
     |tr ' ' '\n'\
     |awk -F'"' '{print $2}'|grep "^[0-9]\{15\}$" \
@@ -1036,303 +1022,9 @@ adb shell setprop ctl.restart zygote
 
 
 
-<details>
-  <summary><h2>ADB Shell / Fastboot install</h2></summary>
-  
-  ### Arch Linux (pacman)
-  
-  ```bash
-  pacman -S android-tools
-  ```
-  
-  ### Debian Linux (apt)
-  
-  ```bash
-  apt install adb fastboot -y    
-  ```
-  
-  ### Gentoo Linux (portage)
-  ```bash
-  emerge --ask dev-util/android-sdk-update-manager dev-util/android-tools
-  ```
-  
-  ### Fedora Linux (dnf)
-  
-  ```bash
-  dnf install adb
-  ```
-  
-  ### GNU/Linux (source)
-  ```bash
-  1) Download the Android SDK Platform Tools ZIP file for Linux.
-  2) Extract the ZIP to an easily-accessible location (like the Desktop for example).
-  3) Open a Terminal window.
-  4) Enter the following command: cd /path/to/extracted/folder/
-  5) This will change the directory to where you extracted the ADB files.
-  6) So for example: cd /Users/Doug/Desktop/platform-tools/
-  7) Connect your device to your Linux machine with your USB cable. 
-     Change the connection mode to “file transfer (MTP)” mode. 
-     This is not always necessary for every device, but it’s recommended so you don’t run into any issues.
-  8) Once the Terminal is in the same folder your ADB tools are in, you can execute the following command to launch the ADB daemon: ./adb devices
-  9) Back on your smartphone or tablet device, you’ll see a prompt asking you to allow USB debugging. Go ahead and grant it.
-  ```
-  
-  ### Windows (source)
-  
-  ```bash
-  1) Download: https://dl.google.com/android/repository/platform-tools-latest-windows.zip
-  2) Extract the contents of this ZIP file into an
-
- easily accessible folder (such as C:\platform-tools)
-  3) Open Windows explorer and browse to where you extracted the contents of this ZIP file
-  4) Then open up a Command Prompt from the same directory as this ADB binary. This can be done by holding 
-       Shift and Right-clicking within the folder then click the “Open command window here” option. 
-  5) Connect your smartphone or tablet to your computer with a USB cable. 
-        Change the USB mode to “file transfer (MTP)” mode. Some OEMs may or may not require this, 
-        but it’s best to just leave it in this mode for general compatibility.
-  6) In the Command Prompt window, enter the following command to launch the ADB daemon: adb devices
-  7) On your phone’s screen, you should see a prompt to allow or deny USB Debugging access. Naturally, 
-        you will want to grant USB Debugging access when prompted (and tap the always allow check box if you never want to see that prompt again).
-  8) Finally, re-enter the command from step #6. If everything was successful,
-        you should now see your device’s serial number in the command prompt (or the PowerShell window).
-  ```
-  
-  ***
-  
-  ### Awesome Aliases For ADB
-  
-  Copy and paste to add the below aliases in ~/.bashrc
-  
-  ```bash
-  cat <<! >> ~/.bashrc
-
-function startintent() {
-  adb devices \
-    |tail -n +2 \
-    |cut -sf 1 \
-    |xargs -I X adb -s X shell am start $(1)
-}
-
-function apkinstall() {
-  adb devices \
-    |tail -n +2 \
-    |cut -sf 1 \
-    |xargs -I X \
-      adb -s X install -r $(1)
-}
-
-function rmapp() {
-  adb devices \
-    |tail -n +2 \
-    |cut -sf 1 \
-    |xargs -I X adb -s X uninstall $(1)
-}
-
-function clearapp() {
-  adb devices \
-    |tail -n +2 \
-    |cut -sf 1 \
-    |xargs -I X adb -s X shell cmd package clear $(1)
-}
-```
-</details>
-  
 
 <details>
-  <summary><h2>Simple for loop for dump global, secure, and system settings in one command</h2></summary>
-  
-```bash
-for options in system security global; do 
-  settings list ${options}; 
-done
-```
-</details>
-
-<details>
-  <summary><h2>Setup and connect to the device via WiFi</h2></summary>
-  
-This requires that the USB cable is connected until you connect. Once connected via USB, copy and paste the following:
-
-```bash
-#!/bin/bash
-# Author: wuseman
-
-port="5555"
-
-interface=$(adb shell ip addr | awk '/state UP/ {print $2}' | sed 's/.$//'; )
-ip=$(adb shell ifconfig ${interface} \
-    |egrep  -o '(\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>\.){3}\<([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\>' 2> /dev/null \
-    |head -n 1)
-
-adb tcpip ${port};sleep 0.5
-adb connect $ip:${port}; sleep 1.0
-adb devices; adb shell
-```
-</details>
-
-<details>
-  <summary><h2>Grab all activities that are available via am start</h2></summary>
-  
-```bash
-#!/bin/bash
-# Author: wuseman
-
-for package in $(cmd package list packages|cut -d: -f2); do 
-    cmd package dump $package \
-        |grep -i "activ" \
-        |grep -Eo "^[[:space:]]+[0-9a-f]+[[:space:]]+.*/[^[:space:]]+" \
-        |grep -oE "[^[:space:]]+$"; 
-done > /tmp/full_activity_package_list.txt
-```
-</details>
-
-<details>
-  <summary><h2>Enter Termux environment via ADB</h2></summary>
-  
-Source: [rewida17 - termux](https://gist.githubusercontent.com/rewida17/f8564bee5a196a8f51b98cd2e53813e4/raw/6c1fbf160438e351c79238e976ee8e3c4bf4742d/termux)
-
-```bash
-#!/system/xbin/bash
-# Author: rewida17
-# Modded by: wuseman
-
-if [[ $(id -u) -ne "0" ]]; then 
-  echo "root is required"; 
-  exit
-else
-  export PREFIX='/data/data/com.termux/files/usr'
-  export HOME='/data/data/com.termux/files/home'
-  export LD_LIBRARY_PATH='/data/data/com.termux/files/usr/lib'
-  export PATH="/data/data/com.termux/files/usr/bin:/data/data/com.termux/files/usr/bin/applets:$PATH"
-  export LANG='en_US.UTF-8'
-  export SHELL='/data/data/com.termux/files/usr/bin/bash'
-  export BIN='/data/data/com.termux/files/usr/bin' 
-  export TERM=vt220
-  export AR="arm-linux-androideabi-ar"
-  export CPP="arm-linux-androideabi-cpp"
-  export GCC="arm-linux-androideabi-gcc"
-  export LD="arm-linux-androideabi-ld"
-  export
-
- NM="arm-linux-androideabi-nm"
-  export OBJDUMP="arm-linux-androideabi-objdump"
-  export RANLIB="arm-linux-androideabi-ranlib"
-  export READELF="arm-linux-androideabi-readelf"
-  export STRIP="arm-linux-androideabi-strip"
-  export TERMUX="/data/data/com.termux/"
-
-  resize
-  cd "$HOME"
-  exec "$SHELL" -l
-fi
-```
-</details>
-
-<details>
-  <summary><h2>Print esim via uiautomator</h2></summary>
-  
-Read the screen via uiautomator and print IMEI for all active esim/sim cards on the device.
-
-```bash
-#!/bin/bash
-# Author: wuseman
-
-### Launch IMEI (same result if you type in the caller app: *#06#) 
-#### and dump screen to /tmp/read_screen.txt via uiautomator and parse esim IMEI:
-
-adb shell input keyevent KEYCODE_CALL;
-sleep 1;
-input text '*#06#'; 
-uiautomator dump --compressed /dev/stdout\
-    |tr ' ' '\n'\
-    |awk -F'"' '{print $2}'|grep "^[0-9]\{15\}$" \
-    |nl -w 1 -s':'\
-    |sed 's/^/IMEI/g'    
-```
-</details>
-
-<details>
-  <summary><h2>Print Device screen state</h2></summary>
-  
-```bash
-screenState="$(adb shell dumpsys input_method \
-   |grep -i "mSystemReady=true mInteractive=" \
-   |awk -F= '{print $3}')"
-
-if [[ $screenState = "true" ]]; then 
-    echo "Screen is on"; 
-else 
-    echo "Screen is off"; 
-fi
-```
-</details>
-
-<details>
-  <summary><h2>How reboot works on Android</h2></summary>
-
-Reboot Commands:
-
-- Reboot to Bootloader:
-```bash
-adb reboot bootloader
-```
-
-- Reboot to Fastboot:
-```bash
-adb reboot fastboot
-```
-
-- Reboot to Recovery:
-```bash
-adb reboot recovery
-```
-
-- Reboot to System:
-```bash
-adb reboot
-```
-
-What is a hot and warm reboot?
-
-In order to answer your question, we need to define what a hot (or warm) reboot is on an Android device. Terms cold (or hard) boot and warm (or soft) boot are more associated with PCs, particularly Windows. For mobile phones or embedded devices, it's difficult to draw a clear line between cold and warm boot. In the case of a cold reboot, power is usually cut to CPUs, RAM, and even the whole motherboard. A soft reboot only kills and starts the processes while retaining power to hardware components. Power management is part of the open-source ACPI/UEFI/BIOS standard on PCs, while on phones, PMIC firmware is usually used with SoCs.
-
-How does reboot really work on Android?
-
-On (re)boot, SoC firmware loads bootloaders in memory which then load executable binaries and start processes (the actual OS). Android is based on the Linux kernel, which is the very first executable of the operating system that runs during the boot process. The kernel initializes necessary hardware and prepares a basic environment before executing `init`, the very first userspace process we can see. It's `init` that then starts and takes care of all services and processes.
-
-A civilized way to reboot or shutdown is to let all processes terminate themselves, saving any pending work, unmounting filesystem
-
-s, and then ask the kernel to reverse the boot process. `init` can handle this on modern OSes, or you can do it manually through the `/proc/sysrq-trigger` interface. Alternatively, we can ask the kernel to perform a quick reboot by killing everything. However, this may cause data loss, particularly due to filesystem corruption.
-
-A brutal way is the long press of the power button (handled by PMIC), which is a cold reboot (or shutdown) in the true sense because the power to CPUs (and RAM) is suddenly cut without waiting for userspace processes and the kernel to terminate gracefully.
-
-Does Android really perform a cold reboot?
-
-On Android phones (and on other systems as well), a normal reboot is not completely cold as power is not cut, at least to RAM because it holds an area where kernel panic logs are stored, which can be accessed on the next boot (refer to ramoops used for last_kmsg or pstore). Similarly, some other memory regions allocated to SoC components and signed firmware that are isolated from the application processor (AP on which the main OS runs) may also not be erased. They include the Baseband Processor (modem), Digital Signal Processor (DSP), WiFi/BT module, etc.
-
-However, a normal reboot isn't a warm reboot either. During reboot, the kernel kills itself and hands over control to bootloaders, which may boot the device in different possible modes (fastboot/bootloader, recovery, or normal boot). The low-level details are vendor and hardware-specific, whether a device performs a complete power-on reset (PoR) or if the hardware is not reset at all. Which components are powered down during different types of reboots depends on the interaction between the kernel, bootloader, SoC, PMIC, watchdog hardware, etc.
-
-How to do a hot reboot?
-
-The Linux kernel also supports another form of warm reboot: `kexec`. The kernel can terminate userspace processes and itself, executing a new kernel which can then start a new userspace environment without doing a hardware reset, POST, and re-initialization by BIOS. This approach is theoretically possible on Android too, i.e., the kernel re-executes itself with the proper command line and then starts `init`. However, it requires some device-specific changes to the kernel and ROM.
-
-Stock Android doesn't provide a soft reboot functionality, but some custom ROMs implement this feature by triggering the restart method of the activity service. However, `init` itself and other core daemons like ueventd, vold, installd, surfaceflinger, logd, servicemanager, healthd, and a long list of vendor daemons aren't restarted.
-
-To restart the device, you can use the following commands:
-
-- On Android 9, the code for the restart method is `179`:
-```bash
-adb shell service call activity 179
-```
-
-- It's also possible to ask `init` to restart `zygote` and dependent services. However, SELinux won't let the property be set, so root access is required:
-```bash
-adb shell setprop ctl.restart zygote
-```
-
-</details>
-
-## acpi
+  <summary><h2>acpi</h2></summary>
 
 Show help for `acpi`:
 ```bash
@@ -1361,7 +1053,10 @@ adb shell acpi -V
 
 ```
 
-## adb
+</details>
+
+<details>
+  <summary><h2>adb</h2></summary>
 
 Environment variables:
 
@@ -1465,76 +1160,10 @@ Detach from a USB device to allow use by others:
 adb detach
 ```
 
-Shell Commands:
+</details>
 
-Enter the device `shell`:
-```bash
-adb shell
-```
-
-Choose escape character or `"none"` (default '`~`'):
-```bash
-adb shell -e
-```
-
-Don't read from `stdin`:
-```bash
-adb shell -n
-```
-
-Disable pty allocation:
-```bash
-adb shell -T
-```
-
-Allocate a `pty` if on a `tty`:
-```bash
-adb shell -t
-```
-
-Force allocate a `pty` if on a `tty`:
-```bash
-adb shell -tt
-```
-
-Disable remote exit codes and `stdout/stderr` separation:
-```bash
-adb shell -x
-```
-
-Run `emulator` console command:
-```bash
-adb shell emu COMMAND
-```
-
-Enter the device shell when there is more than one device connected:
-
-- USB connected:
-```bash
-adb -s <serial> shell
-```
-
-- Network connected:
-```bash
-adb -s <ip:port> shell
-```
-
-Print connection status:
-```bash
-adb devices -l
-```
-
-Print adb help:
-```bash
-adb help
-```
-Print the currend:
-```bash
-adb version
-```
-
-
-## Network Commands
+<details>
+  <summary><h2>Network Commands</h2></summary>
 
 Connect to a device via TCP/IP:
 
@@ -1664,6 +1293,7 @@ List all discovered services:
 adb mdns services
 ```
 
+
 </details>
 
 <details>
@@ -1719,7 +1349,7 @@ Print dev path:
 adb get-devpath
 ```
 
-Remount partitions read-write:
+Remount partitions read-write (`adb remount` does the remount); the `-R` flag additionally reboots the device when needed. Requires a userdebug/unlocked build — not a stock production device:
 
 ```bash
 adb remount -R
@@ -3025,7 +2655,8 @@ Print device carriers:
 adb shell su -c content query --uri content://telephony/carriers
 ```
 
-## ffplay
+<details>
+  <summary><h2>ffplay</h2></summary>
 
 ### Stream via FFplay 
 
@@ -3051,7 +2682,10 @@ FFplay Customized - Stream in 1080p quality
 adb exec-out screenrecord |    --bit-rate=16m |    --Example Output-format=h264 |    --size 1920x1080 -
 ```
 
-## getprop
+</details>
+
+<details>
+  <summary><h2>getprop</h2></summary>
 
 Use the `getprop` command to get system properties.
 
@@ -3085,7 +2719,10 @@ adb shell getprop sys.boot_completed
 ```
 
 
-## input tap 
+</details>
+
+<details>
+  <summary><h2>input tap</h2></summary>
 
 ```bash
 Origin (0, 0)
@@ -3417,289 +3054,6 @@ In this ASCII art:
     adb shell input swipe 0 0 500 2300 & adb shell input swipe 500 0 0 2300
     ```
     
-- To simulate a swipe from left to right across the screen (useful for going to the next item in a carousel):
-    ```
-    adb shell input swipe 0 1150 500 1150
-    ```
-
-- To simulate a swipe from right to left across the screen (useful for going to the previous item in a carousel):
-    ```
-    adb shell input swipe 500 1150 0 1150
-    ```
-
-- To simulate a tap on the "Back" button area (assuming it's at the bottom-left of the screen):
-    ```
-    adb shell input tap 50 2250
-    ```
-
-- To simulate a tap on the "Home" button area (assuming it's at the bottom-middle of the screen):
-    ```
-    adb shell input tap 250 2250
-    ```
-
-- To simulate a tap on the "Recent Apps" button area (assuming it's at the bottom-right of the screen):
-    ```
-    adb shell input tap 450 2250
-    ```
-
-- To simulate a swipe from the "Recent Apps" button to the middle of the screen (useful for opening the recent apps view):
-    ```
-    adb shell input swipe 450 2250 250 1150
-    ```
-
-- To simulate a swipe from the top to the middle of the screen (useful for pulling down the notification shade):
-    ```
-    adb shell input swipe 250 0 250 1150
-    ```
-
-- To simulate a swipe from the middle to the top of the screen (useful for pushing up the notification shade):
-    ```
-    adb shell input swipe 250 1150 250 0
-    ```
-
-- To simulate a long press on the "Home" button (useful for triggering Google Assistant or any other bound service):
-    ```
-    adb shell input swipe 250 2250 250 2250 2000
-    ```
-
-- To simulate a tap on the upper-middle-left of the screen (might be useful for some apps):
-    ```
-    adb shell input tap 125 575
-    ```
-
-- To simulate a tap on the upper-middle-right of the screen (might be useful for some apps):
-    ```
-    adb shell input tap 375 575
-    ```
-
-- To simulate a tap on the lower-middle-left of the screen (might be useful for some apps):
-    ```
-    adb shell input tap 125 1725
-    ```
-
-- To simulate a tap on the lower-middle-right of the screen (might be useful for some apps):
-    ```
-    adb shell input tap 375 1725
-    ```
-
-- To simulate a long press in the upper-middle-left of the screen:
-    ```
-    adb shell input swipe 125 575 125 575 2000
-    ```
-
-- To simulate a long press in the upper-middle-right of the screen:
-    ```
-    adb shell input swipe 375 575 375 575 2000
-    ```
-
-- To simulate a long press in the lower-middle-left of the screen:
-    ```
-    adb shell input swipe 125 1725 125 1725 2000
-    ```
-
-- To simulate a long press in the lower-middle-right of the screen:
-    ```
-    adb shell input swipe 375 1725 375 1725 2000
-    ```
-
-- To simulate a diagonal swipe from upper-middle-left to lower-middle-right of the screen:
-    ```
-    adb shell input swipe 125 575 375 1725
-    ```
-
-- To simulate a diagonal swipe from upper-middle-right to lower-middle-left of the screen:
-    ```
-    adb shell input swipe 375 575 125 1725
-    ```
-
-- To simulate a diagonal swipe from lower-middle-left to upper-middle-right of the screen:
-    ```
-    adb shell input swipe 125 1725 375 575
-    ```
-
-- To simulate a diagonal swipe from lower-middle-right to upper-middle-left of the screen:
-    ```
-    adb shell input swipe 375 1725 125 575
-    ```
-
-- To simulate a tap on the center of the status bar (useful for some quick settings):
-    ```
-    adb shell input tap 250 50
-    ```
-
-- To simulate a tap on the center of the antenna area (might be useful for some games or full-screen apps):
-    ```
-    adb shell input tap 250 2250
-    ```
-
-- To simulate a swipe from the center of the antenna area to the center of the screen (useful for some games or full-screen apps):
-    ```
-    adb shell input swipe 250 2250 250 1150
-    ```
-
-- To simulate a swipe from the center of the status bar to the center of the screen (useful for pulling down the notification shade):
-    ```
-    adb shell input swipe 250 50 250 1150
-    ```
-
-- To simulate a "zig-zag" swipe from the top-left to the bottom-right of the screen:
-    ```
-    adb shell input swipe 0 0 500 1150 & adb shell input swipe 500 1150 0 2300
-    ```
-
-- To simulate a "zig-zag" swipe from the top-right to the bottom-left of the screen:
-    ```
-    adb shell input swipe 500 0 0 1150 & adb shell input swipe 0 1150 500 2300
-    ```
-
-- To simulate a pinch gesture at the top of the screen:
-    ```
-    adb shell input swipe 125 300 250 600 & adb shell input swipe 375 300 250 600
-    ```
-
-- To simulate a spread gesture at the top of the screen:
-    ```
-    adb shell input swipe 250 600 125 300 & adb shell input swipe 250 600 375 300
-    ```
-
-- To simulate a pinch gesture at the bottom of the screen:
-    ```
-    adb shell input swipe 125 2000 250 1700 & adb shell input swipe 375 2000 250 1700
-    ```
-
-- To simulate a spread gesture at the bottom of the screen:
-    ```
-    adb shell input swipe 250 1700 125 2000 & adb shell input swipe 250 1700 375 2000
-    ```
-
-- To simulate a complex gesture (like drawing an "X" from corner to corner):
-    ```
-    adb shell input swipe 0 0 500 2300 & adb shell input swipe 500 0 0 2300
-    ```
-
-Absolutely, here are more examples for screen interactions on an Android device:
-
-- To simulate a long press in the middle and then a swipe to the right (useful for triggering slide menus):
-    ```
-    adb shell input swipe 250 1150 400 1150 2000
-    ```
-
-- To simulate a long press in the middle and then a swipe to the left (useful for triggering slide menus):
-    ```
-    adb shell input swipe 250 1150 100 1150 2000
-    ```
-
-- To simulate a swipe from the center of the screen to the "Back" button (might be useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 1150 50 2250
-    ```
-
-- To simulate a swipe from the center of the screen to the "Home" button (might be useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 1150 250 2250
-    ```
-
-- To simulate a swipe from the center of the screen to the "Recent Apps" button (might be useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 1150 450 2250
-    ```
-
-- To simulate a long press on the top-middle of the screen (might be useful for some apps):
-    ```
-    adb shell input swipe 250 300 250 300 2000
-    ```
-
-- To simulate a long press on the bottom-middle of the screen (might be useful for some apps):
-    ```
-    adb shell input swipe 250 2000 250 2000 2000
-    ```
-
-- To simulate a pinch gesture in the left-half of the screen:
-    ```
-    adb shell input swipe 0 1150 125 1150 & adb shell input swipe 250 1150 125 1150
-    ```
-
-- To simulate a spread gesture in the left-half of the screen:
-    ```
-    adb shell input swipe 125 1150 0 1150 & adb shell input swipe 125 1150 250 1150
-    ```
-
-- To simulate a pinch gesture in the right-half of the screen:
-    ```
-    adb shell input swipe 500 1150 375 1150 & adb shell input swipe 250 1150 375 1150
-    ```
-
-- To simulate a spread gesture in the right-half of the screen:
-    ```
-    adb shell input swipe 375 1150 500 1150 & adb shell input swipe 375 1150 250 1150
-    ```
-
-- To simulate a swipe in the shape of a square (might be useful for some games or apps):
-    ```
-    adb shell input swipe 125 875 375 875 & adb shell input swipe 375 875 375 1425 & adb shell input swipe 375 1425 125 1425 & adb shell input swipe 125 1425 125 875
-    ```
-
-- To simulate a swipe in the shape of a circle (might be useful for some games or apps):
-    ```
-    # This is a bit complex and might not be perfect, but it's a way to simulate a circular swipe:
-    adb shell input swipe 250 1150 375 1150 500 & adb shell input swipe 375 1150 375 1425 500 & adb shell input swipe 375 1425 125 1425 500 & adb shell input swipe 125 1425 125 875 500 & adb shell input swipe 125 875 250 875 500
-    ```
-
-- To simulate a tap on the center of the screen with a delay (useful for timed inputs):
-    ```
-    adb shell input tap 250 1150; sleep 1
-    ```
-
-- To simulate multiple taps on the center of the screen with a delay between each (useful for timed inputs):
-    ```
-    adb shell input tap 250 1150; sleep 1; adb shell input tap 250 1150; sleep 1; adb shell input tap 250 1150
-    ```
-
-- To simulate a swipe from the middle to the left of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 250 1150 0 1150
-    ```
-
-- To simulate a swipe from the middle to the right of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 250 1150 500 1150
-    ```
-
-- To simulate a swipe from the left to the middle of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 0 1150 250 1150
-    ```
-
-- To simulate a swipe from the right to the middle of the screen (useful for some slide menus):
-    ```
-    adb shell input swipe 500 1150 250 1150
-    ```
-
-- To simulate a swipe from the "Back" button to the "Home" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 50 2250 250 2250
-    ```
-
-- To simulate a swipe from the "Home" button to the "Recent Apps" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 2250 450 2250
-    ```
-
-- To simulate a swipe from the "Recent Apps" button to the "Home" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 450 2250 250 2250
-    ```
-
-- To simulate a swipe from the "Home" button to the "Back" button (useful for some full-screen apps):
-    ```
-    adb shell input swipe 250 2250 50 2250
-    ```
-
-- To simulate a long press on the "Recent Apps" button (useful for some services):
-    ```
-    adb shell input swipe 450 2250 450 2250 2000
-    ```
-
 Simulate input events using the `input` command.
 
 ### Erase all text
@@ -3800,6 +3154,12 @@ adb shell input keyevent KEYCODE_DPAD_LEFT
 adb shell input keyevent KEYCODE_DPAD_RIGHT
 
 
+```
+
+Press the Grave (`) key
+
+```bash
+adb shell input keyevent KEYCODE_GRAVE
 ```
 
 Press Home Button
@@ -3937,200 +3297,6 @@ Swipe and unlock the screen
 ```bash
 adb shell input swipe 300 1000 300 500 
 ```
-
-### Erase all text
-
-```bash
-adb shell input keyevent KEYCODE_MOVE_END
-adb shell input keyevent |    --longpress $(printf 'KEYCODE_DEL %.0s' {1..250})
-```
-
-Start Calculator via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CALCULATOR
-```
-
-Start Calendar via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CALENDAR
-```
-
-Start Call Application via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CALL
-```
-
-Start Camera via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CAMERA
-```
-
-Press Caps Lock via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CAPS_LOCK
-```
-
-Start Captions via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CAPTIONS
-```
-
-Open Contacts Application via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CONTACTS
-```
-
-Copy via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_COPY
-```
-
-Cut via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_CUT
-```
-
-Delete via Key
-
-event
-
-```bash
-adb shell input keyevent KEYCODE_DEL
-```
-
-EndCall via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_ENDCALL
-```
-
-Press END via Keyevent
-
-```bash
-adb shell input keyevent KEYCODE_END
-```
-
-Jump to the beginning of the line
-
-```bash
-adb shell input keyevent KEYCODE_DPAD_UP
-```
-
-Jump to the end of the line
-
-```bash
-adb shell input keyevent KEYCODE_DPAD_DOWN
-```
-
-Move the cursor one step to the left/right
-
-```bash
-adb shell input keyevent KEYCODE_DPAD_LEFT
-adb shell input keyevent KEYCODE_DPAD_RIGHT
-```
-
-Press the Grave (`) key
-
-```bash
-adb shell input keyevent KEYCODE_GRAVE
-```
-
-Press Home Button
-
-```bash
-adb shell input keyevent KEYCODE_HOME
-```
-
-Press + and - buttons
-
-```bash
-adb shell input keyevent KEYCODE_MINUS
-adb shell input keyevent KEYCODE_PLUS
-```
-
-Press + in the numpad
-
-```bash
-adb shell input keyevent KEYCODE_NUMPAD_ADD
-```
-
-Press * button
-
-```bash
-adb shell input keyevent KEYCODE_NUMPAD_MULTIPLY
-```
-
-Press search key
-
-```bash
-adb shell input keyevent KEYCODE_SEARCH
-```
-
-Open Settings
-
-```bash
-adb shell input keyevent KEYCODE_SETTINGS
-```
-
-Press # button
-
-```bash
-adb shell input keyevent KEYCODE_NUMPAD_MULTIPLY
-```
-
-Start default music app
-
-```bash
-adb shell input keyevent KEYCODE_POUND
-```
-
-Mute Volume
-
-```bash
-adb shell input keyevent KEYCODE_MUTE
-```
-
-Open the notification bar and close
-
-```bash
-adb shell input keyevent KEYCODE_NOTIFICATION
-adb shell input keyevent KEYCODE_NOTIFICATION
-```
-
-Cancel long press
-
-```bash
-adb shell input keyevent FLAG_CANCELED_LONG_PRESS
-```
-
-Open App Switch for changing applications
-
-```bash
-adb shell input keyevent KEYCODE_APP_SWITCH
-```
-
-Open Default Assistant
-
-```bash
-adb shell input keyevent KEYCODE_BRIGHTNESS_DOWN
-adb shell input keyevent KEYCODE_BRIGHTNESS_UP
-```
-
-Select
-
-```bash
-adb shell input keyevent KEYCODE_BUTTON_SELECT
-```
-
 ### Add a Contact, fill info, and press save on the device
 
 ```bash
@@ -4148,7 +3314,10 @@ adb shell input keyevent 4
 adb shell am start -a android.intent.action.INSERT -t vnd.android.cursor.dir/contact -e name 'wuseman' -e phone '+46728999329' -e email 'wuseman@nr1.nu' 
 ```
 
-## keytool
+</details>
+
+<details>
+  <summary><h2>keytool</h2></summary>
 
 Keytool is a command-line tool for managing keys and certificates.
 
@@ -4164,7 +3333,10 @@ Typically used in Google Maps
 keytool -list -v -keystore ~/.android/debug.keystore -alias your_alias           
 ```
 
-## logcat
+</details>
+
+<details>
+  <summary><h2>logcat</h2></summary>
 
 Use the `logcat` command to view logs generated by the system and applications.
 
@@ -4218,7 +3390,10 @@ Print log from `lock_settings` only
 adb logcat | grep "LockSettingsService|LockPatternUtilsKeyStorage|vold|vold|keystore2|keymaster_tee|LockSettingsService|vold_prepare_subdirs"
 ```
 
-## pm
+</details>
+
+<details>
+  <summary><h2>pm</h2></summary>
 
 The `pm` command is used to manage packages on the device.
 
@@ -4319,7 +3494,10 @@ adb shell pm revoke com.application android.permission.READ_LOGS
 adb shell pm reset-permissions -p your.app.package
 ```
 
-## reboot
+</details>
+
+<details>
+  <summary><h2>reboot</h2></summary>
 
 ### Reboot system
 
@@ -4345,7 +3523,10 @@ adb reboot bootloader
 adb reboot fastboot
 ```
 
-## Android Shell Resources
+</details>
+
+<details>
+  <summary><h2>Android Shell Resources</h2></summary>
 
 - [Dirty Pagetable: A Novel Exploitation Technique To Rule Linux Kernel](https://yanglingxi1993.github.io/dirty_pagetable/dirty_pagetable.html)
 - [Android™ Developer - Emulator Console](https://developer.android.com/studio/run/emulator-console)
@@ -4371,6 +3552,338 @@ adb reboot fastboot
 - [Good review for clipboard control](https://www.smartspate.com/how-to-copy-text-from-the-clipboard-to-android-devices/)
 - [Utilizing adb for daily tasks](https://www.droidcon.com/2021/10/21/utilizing-adb-for-daily-tasks/)
 
+
+</details>
+
+<hr>
+
+## Enriched sections
+
+Conventions: `adb shell <cmd>` runs on the device; commands inside `adb shell` work verbatim in a device shell/Termux. Use `adb -s <serial>` or `export ANDROID_SERIAL=...` with several devices. Output varies by Android version/OEM; root-only items are flagged ⚠️.
+
+<details>
+  <summary><h2>🆕 Network: netstat, sockets, routing, DNS</h2></summary>
+
+| Goal | Command |
+|---|---|
+| All sockets + owning process (root for other UIDs) | `adb shell netstat -tunap` |
+| Same via iproute2 (if present) | `adb shell ss -tunap` |
+| Listening ports only | `adb shell netstat -tlnp` |
+| Raw kernel tables (no root, UID column included) | `adb shell cat /proc/net/tcp /proc/net/tcp6 /proc/net/udp /proc/net/udp6` |
+| Interfaces and addresses | `adb shell ip -br addr` |
+| Routes, all tables (VPN policy routing) | `adb shell ip route show table all` |
+| Policy rules (per-UID VPN routing shows up here) | `adb shell ip rule` |
+| Neighbour/ARP | `adb shell ip neigh` |
+| Interface counters | `adb shell cat /proc/net/dev` |
+| ✚ Connectivity service state, active network, VPN | `adb shell dumpsys connectivity` |
+| ✚ Is a VPN active / which UID owns it | `adb shell dumpsys connectivity | grep -iE "vpn|VPN:"` |
+| ✚ Per-UID / per-iface usage history | `adb shell dumpsys netstats --full` ; `--uid` ; `--summary` |
+| ✚ Data saver, background restrictions per UID | `adb shell dumpsys netpolicy` |
+| ✚ Blocking per-app background data | `adb shell cmd netpolicy add restrict-background-blacklist <uid>` |
+| ✚ Wi-Fi state, scan results, saved nets | `adb shell dumpsys wifi` |
+| ✚ Private DNS mode / host | `adb shell settings get global private_dns_mode` ; `private_dns_specifier` |
+| ✚ Set Private DNS | `adb shell settings put global private_dns_mode hostname` then `settings put global private_dns_specifier dns.example.org` |
+| ✚ Reverse-lookup UID → package | `adb shell pm list packages -U | grep "uid:10123"` |
+| ✚ DNS resolver stats | `adb shell dumpsys dnsresolver` |
+| ✚ Captive-portal check URLs | `adb shell settings get global captive_portal_http_url` |
+| ✚ Capture traffic (⚠️ root, tcpdump binary needed) | `adb shell su -c "tcpdump -i any -s0 -w /sdcard/cap.pcap"` then `adb pull /sdcard/cap.pcap` |
+
+Reading `/proc/net/tcp`: `local_address` is little-endian hex (`0100007F:1F90` = 127.0.0.1:8080); `st` `01`=ESTABLISHED, `0A`=LISTEN, `06`=TIME_WAIT; column `uid` identifies the app. Script 📜 `net_connections_csv.sh` decodes this into a CSV with package names, no root needed.
+
+🔒 Tip: to see what an app talks to without root, run the VPN-mode packet loggers (e.g. PCAPdroid, open source) and compare against 📜 `net_connections_csv.sh`.
+
+</details>
+
+<details>
+  <summary><h2>🆕 Processes: procstats, ps, top, /proc</h2></summary>
+
+- ✚ Process stats over time (PSS/RSS min-avg-max, run-time %): `adb shell dumpsys procstats --hours 3` (also `--full-details`, `--checkin`, `--csv`, `--package <pkg>`, `--current`).
+- ✚ Clear stats: `adb shell dumpsys procstats --clear` (⚠️ may need root on newer builds).
+- ✚ Process list with memory: `adb shell ps -A -o PID,PPID,USER,RSS,VSZ,S,NAME`
+- ✚ Sorted by RSS (on host): `adb shell ps -A -o RSS,PID,NAME | sort -nr | head`
+- ✚ Live CPU: `adb shell top -b -n 1 -m 15 -o PID,USER,%CPU,RES,ARGS`
+- ✚ CPU per package: `adb shell dumpsys cpuinfo`
+- ✚ Per-process details (own-UID or root): `adb shell cat /proc/<pid>/status` · `/proc/<pid>/smaps_rollup` · `/proc/<pid>/cmdline` · `ls -l /proc/<pid>/fd` · `/proc/<pid>/oom_score_adj`
+- ✚ Find PID of app: `adb shell pidof com.example.app`
+- ✚ Threads: `adb shell ps -T -p <pid>`
+- ✚ Process OOM / LRU ordering: `adb shell dumpsys activity processes` (look for `oom`, `procState`)
+- ✚ Kernel: `adb shell cat /proc/loadavg /proc/stat /proc/pressure/memory` (PSI where available)
+- ✚ Kill background: `adb shell am kill <pkg>` (cached only) · `adb shell am force-stop <pkg>` (hard)
+
+</details>
+
+<details>
+  <summary><h2>🆕 Memory: dumpsys meminfo and friends</h2></summary>
+
+- ✚ System overview: `adb shell dumpsys meminfo`
+- ✚ One app, full breakdown (Java heap, native, graphics, code…): `adb shell dumpsys meminfo <pkg|pid>`
+- ✚ Group by OOM adj: `adb shell dumpsys meminfo --oom`
+- ✚ Machine-readable: `adb shell dumpsys meminfo -c`
+- ✚ Native detail: `adb shell dumpsys meminfo --unreachable <pid>` (native leak hunt)
+- ✚ Raw kernel view: `adb shell cat /proc/meminfo` ; key fields `MemAvailable`, `SwapFree`, `Dirty`, `Slab`
+- ✚ Maps: `adb shell showmap <pid>` (⚠️ root for others) ; `adb shell procrank` (⚠️ userdebug/root)
+- ✚ zRAM/swap: `adb shell cat /proc/swaps` ; `adb shell cat /sys/block/zram0/mm_stat`
+- ✚ Low-memory killer log: `adb logcat -b events -d | grep -E "am_kill|lmkd"` ; `adb shell dumpsys activity lmk` (version dependent)
+- ✚ Graphics memory: `adb shell dumpsys gfxinfo <pkg>` ; `adb shell dumpsys SurfaceFlinger`
+- ✚ Storage: `adb shell df -h` ; `adb shell dumpsys diskstats`
+
+Memory to CSV (ready to use): 📜 `mem_by_process.sh` (per-process PSS snapshot), 📜 `mem_timeline.sh` (system memory over time), 📜 `cpu_top_csv.sh`, and on-device 📜 `shell_on_device_meminfo_csv.sh` (run it from cron/Termux `crond` or a loop).
+
+`mem_by_process.sh` writes a single snapshot per run (a fresh header each time), so a fixed filename in a loop overwrites instead of accumulating. For a time series use `mem_timeline.sh [s] [n]` (system memory), or give `mem_by_process.sh` a unique filename per sample.
+
+</details>
+
+<details>
+  <summary><h2>🆕 Alarms, jobs, doze, standby</h2></summary>
+
+- ✚ All alarms: `adb shell dumpsys alarm` (sections: pending alarms by type, "Alarm Stats" per package with wakeups/count, "Top Alarms", batching state)
+- ✚ Only stats: `adb shell dumpsys alarm | sed -n '/Alarm Stats:/,$p'`
+- ✚ Alarms of one app: `adb shell dumpsys alarm | grep -A6 <pkg>`
+- ✚ Scheduled jobs (WorkManager/JobScheduler): `adb shell dumpsys jobscheduler` · force run: `adb shell cmd jobscheduler run -f <pkg> <job_id>`
+- ✚ Doze state: `adb shell dumpsys deviceidle` ; force: `adb shell dumpsys deviceidle force-idle` ; leave: `adb shell dumpsys deviceidle unforce`
+- ✚ Doze allowlist: `adb shell dumpsys deviceidle whitelist` ; add: `adb shell dumpsys deviceidle whitelist +<pkg>`
+- ✚ App Standby bucket: `adb shell am get-standby-bucket <pkg>` ; set: `adb shell am set-standby-bucket <pkg> rare`
+- ✚ Wakelocks: `adb shell dumpsys power | grep -i "wake lock"`
+- ✚ Exact-alarm permission (Android 12+): `adb shell cmd appops get <pkg> SCHEDULE_EXACT_ALARM` ; revoke: `adb shell cmd appops set <pkg> SCHEDULE_EXACT_ALARM deny`
+- ✚ Broadcasts in flight / receivers: `adb shell dumpsys activity broadcasts`
+- ✚ Foreground services: `adb shell dumpsys activity services <pkg>`
+
+📜 `alarm_summary.sh` stores the raw dump and a pending-alarm count per package.
+
+</details>
+
+<details>
+  <summary><h2>🆕 Battery, thermal, power</h2></summary>
+
+- ✚ Quick state: `adb shell dumpsys battery`
+- ✚ Fake unplugged (so stats accumulate while on USB): `adb shell dumpsys battery unplug` ; restore: `adb shell dumpsys battery reset`
+- ✚ Reset stats: `adb shell dumpsys batterystats --reset`
+- ✚ Report: `adb shell dumpsys batterystats` (look at "Estimated power use (mAh)", "All kernel wake locks", "All partial wake locks")
+- ✚ One package: `adb shell dumpsys batterystats --charged <pkg>`
+- ✚ For Battery Historian: `adb shell dumpsys batterystats --checkin`, plus `adb bugreport`
+- ✚ Temperatures: `adb shell dumpsys thermalservice` · `adb shell cat /sys/class/thermal/thermal_zone*/temp`
+- ✚ Charge counters: `adb shell cat /sys/class/power_supply/battery/{capacity,current_now,voltage_now,temp,charge_full,cycle_count}` (availability varies)
+- ✚ Screen/power state: `adb shell dumpsys power | grep -E "mWakefulness|Display Power"`
+
+📜 `battery_drain_report.sh [minutes]` automates reset → wait → export.
+
+</details>
+
+<details>
+  <summary><h2>🆕 Logcat: dump, filter, buffers</h2></summary>
+
+- ✚ Dump and exit: `adb logcat -d` · clear: `adb logcat -c` · buffers: `-b main,system,crash,events,radio,all`
+- ✚ Format: `-v threadtime` (default useful), `-v brief`, `-v time`, `-v epoch`
+- ✚ Filter: `adb logcat ActivityManager:I MyTag:D *:S` · regex: `adb logcat -e "wifi|dns"`
+- ✚ By app: `adb logcat --pid=$(adb shell pidof -s <pkg>)`
+- ✚ Crashes only: `adb logcat -b crash -d`
+- ✚ Last-crash/ANR data: `adb shell dumpsys dropbox --print data_app_crash`
+- ✚ Buffer sizes: `adb logcat -g` · set: `adb logcat -G 16M`
+- ✚ Save with rotation: `adb logcat -f /sdcard/log.txt -r 4096 -n 8`
+
+</details>
+
+<details>
+  <summary><h2>🆕 Packages, permissions, app ops (🔒 privacy)</h2></summary>
+
+- ✚ Third-party apps: `adb shell pm list packages -3` · with installer & UID: `pm list packages -f -i -U`
+- ✚ Disabled / system: `pm list packages -d` / `-s`
+- ✚ Who installed an app (Play, F-Droid, sideload=null/adb): `adb shell dumpsys package <pkg> | grep -i installer`
+- ✚ Permissions: `adb shell dumpsys package <pkg> | grep -A60 "runtime permissions"`
+- ✚ Grant/revoke: `adb shell pm grant <pkg> android.permission.X` · `pm revoke <pkg> android.permission.X`
+- ✚ App ops (usage-log): `adb shell cmd appops get <pkg>` ; set: `cmd appops set <pkg> COARSE_LOCATION deny`
+- ✚ Who used mic/camera/location recently: `adb shell dumpsys appops` (or `cmd appops query-op CAMERA allow`)
+- ✚ Debloat without root, reversible: `adb shell pm uninstall -k --user 0 <pkg>` · restore: `adb shell cmd package install-existing <pkg>`
+- ✚ Disable/enable: `adb shell pm disable-user --user 0 <pkg>` / `pm enable <pkg>`
+- ✚ Signing/ certificate info: `adb shell dumpsys package <pkg> | grep -iE "signatures|versionName|firstInstall"`
+- ✚ Extract APK: `adb shell pm path <pkg>` → `adb pull <path>`
+- ✚ Notifications (⚠️ content shown): `adb shell dumpsys notification --noredact`
+- ✚ Location providers/requests: `adb shell dumpsys location`
+- ✚ Android ID (SSAID): `adb shell settings get secure android_id`
+- ✚ Accessibility services (spyware vector): `adb shell settings get secure enabled_accessibility_services`
+- ✚ Device admins: `adb shell dpm list-owners` ; `adb shell dumpsys device_policy`
+- ✚ Usage stats: `adb shell dumpsys usagestats`
+- ✚ Install flags: `adb install -r -d -g app.apk` (-g grants all runtime perms; avoid for privacy) · split APKs: `adb install-multiple *.apk`
+
+📜 `privacy_audit.sh` and `package_inventory.sh` export these to CSV.
+
+</details>
+
+<details>
+  <summary><h2>🆕 System, activity & input helpers</h2></summary>
+
+- ✚ Foreground app: `adb shell dumpsys window | grep -E "mCurrentFocus|mFocusedApp"` ; `adb shell dumpsys activity activities | grep ResumedActivity`
+- ✚ Resolve what launches an app: `adb shell cmd package resolve-activity --brief <pkg>`
+- ✚ Start / broadcast / service: `am start -n pkg/.Activity` · `am broadcast -a ACTION` · `am startservice`
+- ✚ Screenshot/record: `adb exec-out screencap -p > s.png` · `adb shell screenrecord --time-limit 30 /sdcard/r.mp4`
+- ✚ Input: `input tap X Y` · `input swipe x1 y1 x2 y2 ms` · `input text 'hi'` · `input keyevent 26`
+- ✚ Display: `wm size` · `wm density` · `wm size reset`
+- ✚ Settings: `settings list global|secure|system` · `settings put global animator_duration_scale 0`
+- ✚ Properties: `getprop ro.build.version.release ro.product.model ro.build.fingerprint`
+- ✚ Kernel/SELinux: `uname -a` · `getenforce` · `cat /proc/version` · `cat /proc/cmdline`
+- ✚ Bugreport zip: `adb bugreport out.zip`
+- ✚ Wireless debugging (Android 11+): `adb pair <ip:port>` then `adb connect <ip:port>` (no USB, pairing code based; prefer over `adb tcpip` which is unauthenticated-ish on LAN)
+- ✚ Push/pull: `adb push` · `adb pull` · `adb sync` (Android specific) · backup via `adb exec-out run-as <pkg> tar c .` for debuggable apps
+
+</details>
+
+<details>
+  <summary><h2>🆕 Integrity: sha256sum, APK hashes, signing certs, verified boot 🔐</h2></summary>
+
+### 9.1 File hashing on device
+
+`sha256sum`, `md5sum`, `sha1sum`, `sha512sum` are toybox applets. Toybox has supplied most shell utilities since Android 6 (Marshmallow), and the hash tools ship in `/system/bin`, so `adb shell sha256sum` works out of the box on roughly Android 6+ and is reliably present on Android 8+.
+
+```bash
+# hash a file on the device, no pull needed
+adb shell sha256sum /sdcard/Download/app.apk
+
+# all algorithms
+adb shell md5sum FILE ; adb shell sha1sum FILE ; adb shell sha256sum FILE ; adb shell sha512sum FILE
+
+# hash every installed APK (may be slow; no root needed for most paths)
+adb shell 'for p in $(pm list packages -f | sed "s/package://;s/ .*//"); do sha256sum "$p"; done'
+
+# verify a manifest you pushed to the device
+adb push SHA256SUMS /sdcard/checksums.txt
+adb shell 'cd /sdcard && sha256sum -c checksums.txt'
+
+# compare a pulled file against the on-device hash (host side)
+adb shell sha256sum /sdcard/f.apk | awk '{print $1}' > /tmp/dev.sha
+sha256sum f.apk | awk '{print $1}' > /tmp/host.sha
+diff /tmp/dev.sha /tmp/host.sha && echo OK
+
+# integrity of a directory tree (hashes + paths)
+adb shell 'find /sdcard/DCIM -type f -exec sha256sum {} \;' > dcim.sha256
+```
+
+Compatibility notes:
+- `sha256sum -c` (verify) and `-s` (silent) are part of toybox's md5sum-family implementation.
+- On Android 10/11+, scoped storage restricts what the *shell* user can read under `/sdcard/Android/data/<pkg>/`; public folders like `/sdcard/Download` and `/sdcard/DCIM` are fine. `adb pull`/`push` still work for accessible paths.
+- App-private dirs (`/data/data/<pkg>`) need root, or `run-as <pkg>` for debuggable apps.
+- Some OEM shells alias `sha256sum` to busybox; behavior is the same, but `-c` support can vary on very old builds — test with `adb shell sha256sum --help`.
+
+### 9.2 APK integrity vs signing identity 🔐
+
+Two different things — do not conflate them:
+- **File SHA-256**: hash of the exact APK bytes. Changes with every rebuild/repack. Good for "is this the same file I downloaded?"
+- **Signing-certificate SHA-256**: hash of the X.509 signing cert. Stable across updates from the same developer key. This is what you pin to detect a repackaged/trojanized APK.
+
+```bash
+# On-device: file hash of an installed APK
+adb shell pm path com.example.app          # e.g. package:/data/app/.../base.apk
+adb shell sha256sum /data/app/.../base.apk
+
+# Host-side: signing cert fingerprint (needs Android SDK build-tools)
+apksigner verify --print-certs app.apk
+# look for: "Signer #1 certificate SHA-256 digest:"
+
+# Host-side alternative (JDK): fully reliable only for v1 (JAR) signatures
+keytool -printcert -jarfile app.apk
+
+# Which signature schemes are present/verified (v1/v2/v3/v4)
+apksigner verify -v app.apk
+```
+
+`apksigner` is the reliable way to read signer certs regardless of v1/v2/v3/v4 scheme; `keytool -printcert -jarfile` only fully reads v1 (JAR) signatures.
+
+On-device cert fingerprint without root: not available via a simple stock shell command — `dumpsys package <pkg>` shows signature info but the raw cert digest format/availability varies by Android version and OEM. The dependable path is `adb pull` the APK, then run `apksigner` on the host.
+
+### 9.3 Verified Boot / bootloader state 🔐
+
+These come from AVB (Android Verified Boot) via kernel cmdline → system props, not from files you can hash:
+
+```bash
+adb shell getprop ro.boot.verifiedbootstate   # green | yellow | orange | red
+adb shell getprop ro.boot.flash.locked        # 1=locked, 0=unlocked
+adb shell getprop ro.boot.vbmeta.device_state # locked | unlocked
+adb shell getprop ro.boot.veritymode          # enforcing | logging | disabled (device-dependent)
+adb shell getprop ro.boot.warranty_bit        # Knox/Samsung: 0=stock, 1=tripped
+adb shell getprop ro.build.tags               # release-keys | test-keys
+adb shell getprop ro.build.fingerprint        # exact OS build identity
+adb shell getprop ro.boot.vbmeta.avb_version
+```
+
+Meaning of `verifiedbootstate`: `green` = full chain of trust verified; `yellow` = custom root cert but signature valid; `orange` = bootloader unlocked, device freely modifiable; `red` = verification failed.
+
+dm-verity itself (block-level integrity of system/vendor partitions) has been part of Verified Boot since Android 4.4; on modern devices it is enforced via AVB and you generally check it through the props above rather than running a `verity` command.
+
+### 9.4 📜 Script: `apk_integrity.sh`
+
+```bash
+./apk_integrity.sh [out.csv] [--pull]
+```
+
+- Default: hashes every installed APK on-device, no root, no pull.
+- `--pull`: also copies each APK to `./apks/` and runs `apksigner verify --print-certs` if available, adding a `cert_sha256` column.
+- Works on Android 6+ for the hashing part; the cert column needs host build-tools and is the only way to get a trustworthy fingerprint.
+
+### 9.5 Quick recipes
+
+```bash
+# "Is the APK on my phone the same one from the developer's site?"
+adb shell sha256sum "$(adb shell pm path com.example.app | sed 's/package://')"
+# compare to the hash published next to the download
+
+# "Is this app still signed by the original key?"  (host)
+adb pull "$(adb shell pm path com.example.app | sed 's/package://')" /tmp/a.apk
+apksigner verify --print-certs /tmp/a.apk | grep SHA-256
+
+# "Is my bootloader/verified-boot state clean?"
+adb shell getprop | grep -E "verifiedbootstate|vbmeta.device_state|flash.locked|build.tags"
+
+# "Baseline + detect drift later" for a folder
+adb shell 'cd /sdcard/important && sha256sum $(find . -type f)' > baseline.sha256
+# later:
+adb push baseline.sha256 /sdcard/important/
+adb shell 'cd /sdcard/important && sha256sum -c baseline.sha256'
+```
+
+---
+
+</details>
+
+<details>
+  <summary><h2>📜 Ready-to-use scripts</h2></summary>
+
+Files are shipped alongside this document in `scripts/`. All run on the host with `adb` in PATH, no root, `chmod +x` first.
+
+| Script | Output |
+|---|---|
+| `mem_by_process.sh` | CSV: timestamp, pss_kb, process, pid, state |
+| `mem_timeline.sh [s] [n]` | CSV: system memory columns per sample |
+| `cpu_top_csv.sh [s] [n]` | CSV: pid, user, cpu%, rss_kb, name |
+| `net_connections_csv.sh` | CSV: proto, local, remote, state, uid, package |
+| `net_stats_csv.sh` | CSV per-UID rx/tx (legacy kernels) or raw netstats dump |
+| `alarm_summary.sh` | CSV + raw alarm dump |
+| `battery_drain_report.sh [min]` | folder with batterystats reports |
+| `privacy_audit.sh` | CSV: installer, targetSdk, dangerous perms, bg appop |
+| `package_inventory.sh` | CSV: package, uid, installer, apk, type, enabled |
+| `full_diag_dump.sh` | tar.gz with ~25 dumpsys/proc/ip outputs and a full logcat |
+| `live_activity_cmd.sh` | prints `am start` commands as you tap through the UI |
+| `shell_on_device_meminfo_csv.sh` | on-device CSV append, for loops/cron |
+| `apk_integrity.sh [out.csv] [--pull]` | CSV: package, apk path, on-device sha256, optional cert sha256 |
+
+Caveats (untested against your device; verify on yours): `top` flags differ across toybox versions; `xt_qtaguid` is absent on most Android 10+ builds (vendor/kernel-dependent); `/proc/net/tcp` is filtered per-UID on Android 10+ for non-system shells, so `net_connections_csv.sh` may show only the shell's sockets unless root/`su` is used (replace `adb shell cat` with `adb shell su -c cat`).
+
+---
+
+</details>
+
+<details>
+  <summary><h2>Legend</h2></summary>
+
+| Sign | Meaning |
+|---|---|
+| 🆕 | New section added to the original |
+| ✚ | New or extended command inside a section |
+| 📜 | Ready-to-use script (in `scripts/`) |
+| 🔒 | Privacy-relevant note or command |
+| 🔐 | Integrity / anti-tamper related |
+| 🔧 | Correction to the original document |
+| ⚠️ | Needs root, userdebug build, or exposes sensitive data |
+
+</details>
 
 ## Greetings
 
